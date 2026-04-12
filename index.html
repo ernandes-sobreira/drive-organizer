@@ -1,0 +1,1575 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DriveOrganizer IA</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --green: #00C896;
+    --green-dark: #00A87E;
+    --blue: #2563EB;
+    --red: #EF4444;
+    --orange: #F59E0B;
+    --purple: #7C3AED;
+    --gray-50: #F8FAFC;
+    --gray-100: #F1F5F9;
+    --gray-200: #E2E8F0;
+    --gray-300: #CBD5E1;
+    --gray-400: #94A3B8;
+    --gray-500: #64748B;
+    --gray-600: #475569;
+    --gray-700: #334155;
+    --gray-800: #1E293B;
+    --gray-900: #0F172A;
+    --shadow: 0 4px 24px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #fff;
+    color: var(--gray-800);
+    min-height: 100vh;
+    font-size: 15px;
+  }
+
+  /* HEADER */
+  .header {
+    background: #fff;
+    border-bottom: 2px solid var(--gray-100);
+    padding: 0 24px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    color: var(--gray-900);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--green), var(--blue));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .header-right {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .user-badge {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--gray-100);
+    border-radius: 100px;
+    padding: 6px 14px 6px 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-600);
+  }
+  .user-avatar {
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, var(--green), var(--blue));
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: #fff; font-weight: 700;
+  }
+
+  /* MAIN */
+  .main { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+  /* AUTH SCREEN */
+  #auth-screen {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; min-height: 70vh; text-align: center;
+    gap: 24px;
+  }
+  .auth-icon { font-size: 64px; }
+  .auth-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px; font-weight: 800;
+    color: var(--gray-900);
+    line-height: 1.2;
+  }
+  .auth-sub {
+    font-size: 16px; color: var(--gray-500);
+    max-width: 420px; line-height: 1.6;
+  }
+  .features-row {
+    display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;
+    margin: 8px 0;
+  }
+  .feature-chip {
+    background: var(--gray-100);
+    border-radius: 100px;
+    padding: 8px 16px;
+    font-size: 13px;
+    color: var(--gray-600);
+    font-weight: 500;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .btn-google {
+    background: #fff;
+    border: 2px solid var(--gray-200);
+    border-radius: 14px;
+    padding: 14px 28px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gray-700);
+    cursor: pointer;
+    display: flex; align-items: center; gap: 12px;
+    transition: all 0.2s;
+    box-shadow: var(--shadow);
+  }
+  .btn-google:hover {
+    border-color: var(--green);
+    box-shadow: 0 4px 20px rgba(0,200,150,0.15);
+    transform: translateY(-1px);
+  }
+
+  /* APP SCREEN */
+  #app-screen { display: none; }
+
+  /* STEPS */
+  .steps-bar {
+    display: flex; gap: 0; margin-bottom: 32px;
+    background: var(--gray-100); border-radius: var(--radius);
+    padding: 6px;
+  }
+  .step {
+    flex: 1; padding: 10px 16px; border-radius: 10px;
+    font-size: 13px; font-weight: 600; color: var(--gray-400);
+    display: flex; align-items: center; gap: 8px;
+    transition: all 0.2s; cursor: default; justify-content: center;
+  }
+  .step.active {
+    background: #fff; color: var(--gray-800);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .step.done { color: var(--green); }
+  .step-num {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--gray-200); color: var(--gray-500);
+    font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .step.active .step-num { background: var(--green); color: #fff; }
+  .step.done .step-num { background: var(--green); color: #fff; }
+
+  /* PANELS */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* FOLDER SELECTOR */
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px; font-weight: 700;
+    color: var(--gray-900); margin-bottom: 8px;
+  }
+  .section-sub { color: var(--gray-500); margin-bottom: 24px; font-size: 14px; }
+
+  .folder-input-row {
+    display: flex; gap: 12px; align-items: center;
+    margin-bottom: 20px;
+  }
+  .input-field {
+    flex: 1;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--gray-700);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input-field:focus { border-color: var(--green); }
+
+  .btn-primary {
+    background: var(--green);
+    color: #fff; border: none;
+    border-radius: var(--radius-sm);
+    padding: 12px 24px;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 8px;
+    white-space: nowrap;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-primary:hover { background: var(--green-dark); transform: translateY(-1px); }
+  .btn-primary:disabled { background: var(--gray-300); cursor: not-allowed; transform: none; }
+
+  .btn-secondary {
+    background: var(--gray-100);
+    color: var(--gray-700); border: none;
+    border-radius: var(--radius-sm);
+    padding: 12px 20px;
+    font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-secondary:hover { background: var(--gray-200); }
+
+  /* FOLDER LIST */
+  .folder-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+  .folder-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    cursor: pointer; transition: all 0.2s;
+    background: #fff;
+  }
+  .folder-item:hover { border-color: var(--green); background: #F0FDF9; }
+  .folder-item.selected { border-color: var(--green); background: #F0FDF9; }
+  .folder-icon { font-size: 20px; }
+  .folder-name { font-weight: 500; color: var(--gray-700); flex: 1; }
+  .folder-meta { font-size: 12px; color: var(--gray-400); }
+
+  /* NAMING RULES */
+  .rules-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 12px; margin-bottom: 24px;
+  }
+  .rule-card {
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    background: #fff;
+  }
+  .rule-card-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px;
+  }
+  .rule-badge {
+    background: var(--gray-800); color: #fff;
+    border-radius: 6px; padding: 4px 10px;
+    font-size: 12px; font-weight: 700;
+    font-family: 'Syne', sans-serif;
+  }
+  .rule-badge.green { background: var(--green); }
+  .rule-badge.blue { background: var(--blue); }
+  .rule-badge.orange { background: var(--orange); }
+  .rule-badge.purple { background: var(--purple); }
+  .rule-badge.red { background: var(--red); }
+  .rule-label { font-size: 13px; color: var(--gray-500); }
+  .rule-example {
+    font-size: 12px; color: var(--gray-400);
+    font-family: monospace;
+    background: var(--gray-100); padding: 6px 10px;
+    border-radius: 6px; margin-top: 8px;
+  }
+
+  /* PROGRESS */
+  .progress-box {
+    background: var(--gray-50);
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 32px;
+    text-align: center;
+  }
+  .progress-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px; font-weight: 700;
+    margin-bottom: 8px; color: var(--gray-800);
+  }
+  .progress-sub { font-size: 14px; color: var(--gray-500); margin-bottom: 24px; }
+  .progress-bar-wrap {
+    background: var(--gray-200);
+    border-radius: 100px; height: 8px;
+    margin-bottom: 12px; overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green), var(--blue));
+    border-radius: 100px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+  .progress-status {
+    font-size: 13px; color: var(--gray-500);
+    min-height: 20px;
+  }
+  .progress-log {
+    margin-top: 16px;
+    background: var(--gray-900);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    text-align: left;
+    max-height: 160px;
+    overflow-y: auto;
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--green);
+    line-height: 1.6;
+  }
+
+  /* TABLE */
+  .table-toolbar {
+    display: flex; gap: 10px; align-items: center;
+    margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .filter-btn {
+    background: var(--gray-100);
+    border: 2px solid transparent;
+    border-radius: 100px;
+    padding: 6px 14px;
+    font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s;
+    color: var(--gray-600);
+    font-family: 'DM Sans', sans-serif;
+  }
+  .filter-btn:hover { border-color: var(--gray-300); }
+  .filter-btn.active { background: var(--gray-800); color: #fff; }
+
+  .select-all-row {
+    display: flex; gap: 8px; align-items: center;
+    margin-bottom: 12px; flex-wrap: wrap;
+  }
+  .bulk-btn {
+    border: 2px solid var(--gray-200);
+    background: #fff; border-radius: 8px;
+    padding: 8px 14px; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 6px;
+    font-family: 'DM Sans', sans-serif; color: var(--gray-700);
+  }
+  .bulk-btn:hover { border-color: var(--gray-400); }
+  .bulk-btn.approve { border-color: var(--green); color: var(--green); }
+  .bulk-btn.approve:hover { background: #F0FDF9; }
+  .bulk-btn.archive { border-color: var(--orange); color: var(--orange); }
+  .bulk-btn.archive:hover { background: #FFFBEB; }
+  .bulk-btn.delete { border-color: var(--red); color: var(--red); }
+  .bulk-btn.delete:hover { background: #FEF2F2; }
+  .selected-count {
+    font-size: 13px; color: var(--gray-500); margin-left: 4px;
+  }
+
+  .table-wrap { overflow-x: auto; margin-bottom: 24px; }
+  table { width: 100%; border-collapse: collapse; min-width: 700px; }
+  thead th {
+    background: var(--gray-50);
+    padding: 12px 14px;
+    text-align: left;
+    font-size: 12px; font-weight: 600;
+    color: var(--gray-500); text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid var(--gray-200);
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--gray-100);
+    transition: background 0.15s;
+  }
+  tbody tr:hover { background: var(--gray-50); }
+  tbody tr.selected-row { background: #F0FDF9; }
+  tbody td { padding: 12px 14px; vertical-align: middle; }
+  .cb { width: 18px; height: 18px; cursor: pointer; accent-color: var(--green); }
+
+  .file-name-old {
+    font-size: 13px; color: var(--gray-400);
+    text-decoration: line-through; margin-bottom: 2px;
+  }
+  .file-name-new {
+    font-size: 14px; font-weight: 500; color: var(--gray-800);
+  }
+  .file-name-edit {
+    border: 1.5px solid var(--green);
+    border-radius: 6px; padding: 5px 10px;
+    font-size: 13px; font-family: 'DM Sans', sans-serif;
+    color: var(--gray-800); width: 100%; outline: none;
+  }
+
+  .type-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    border-radius: 100px; padding: 4px 10px;
+    font-size: 11px; font-weight: 600;
+    white-space: nowrap;
+  }
+  .type-ART { background: #EFF6FF; color: var(--blue); }
+  .type-DADOS { background: #F0FDF9; color: var(--green-dark); }
+  .type-DOCS { background: #F5F3FF; color: var(--purple); }
+  .type-REL { background: #FFFBEB; color: #B45309; }
+  .type-CERT { background: #FEF3C7; color: #92400E; }
+  .type-? { background: var(--gray-100); color: var(--gray-500); }
+
+  .action-select {
+    border: 2px solid var(--gray-200);
+    border-radius: 8px; padding: 6px 10px;
+    font-size: 13px; font-family: 'DM Sans', sans-serif;
+    color: var(--gray-700); background: #fff; cursor: pointer;
+    outline: none; transition: border-color 0.2s;
+  }
+  .action-select:focus { border-color: var(--green); }
+  .action-select.renomear { border-color: var(--green); }
+  .action-select.engavetar { border-color: var(--orange); }
+  .action-select.excluir { border-color: var(--red); }
+  .action-select.manter { border-color: var(--gray-300); }
+
+  .edit-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--gray-400); font-size: 14px; padding: 4px;
+    transition: color 0.2s;
+  }
+  .edit-btn:hover { color: var(--green); }
+
+  .confidence-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    display: inline-block; margin-right: 6px;
+  }
+  .conf-high { background: var(--green); }
+  .conf-mid { background: var(--orange); }
+  .conf-low { background: var(--red); }
+
+  /* ARCHIVE STRUCTURE */
+  .archive-preview {
+    background: var(--gray-50);
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .archive-title {
+    font-weight: 600; font-size: 14px;
+    color: var(--gray-700); margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .archive-tree { font-size: 13px; color: var(--gray-600); line-height: 2; font-family: monospace; }
+  .archive-tree .folder { color: var(--orange); font-weight: 600; }
+  .archive-tree .file { color: var(--gray-500); padding-left: 20px; }
+
+  /* EXECUTE */
+  .execute-summary {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 12px; margin-bottom: 24px;
+  }
+  .summary-card {
+    border: 2px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    padding: 16px; text-align: center;
+  }
+  .summary-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px; font-weight: 800;
+    line-height: 1;
+  }
+  .summary-label { font-size: 13px; color: var(--gray-500); margin-top: 4px; }
+  .summary-card.green { border-color: var(--green); }
+  .summary-card.green .summary-num { color: var(--green); }
+  .summary-card.orange { border-color: var(--orange); }
+  .summary-card.orange .summary-num { color: var(--orange); }
+  .summary-card.red { border-color: var(--red); }
+  .summary-card.red .summary-num { color: var(--red); }
+  .summary-card.blue { border-color: var(--blue); }
+  .summary-card.blue .summary-num { color: var(--blue); }
+
+  .execute-warning {
+    background: #FFFBEB;
+    border: 2px solid var(--orange);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    font-size: 14px; color: #92400E;
+    margin-bottom: 20px;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+
+  .btn-execute {
+    background: linear-gradient(135deg, var(--green), var(--blue));
+    color: #fff; border: none;
+    border-radius: var(--radius-sm);
+    padding: 16px 32px;
+    font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Syne', sans-serif;
+    box-shadow: 0 4px 20px rgba(0,200,150,0.25);
+  }
+  .btn-execute:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(0,200,150,0.35); }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center; padding: 48px 24px;
+    color: var(--gray-400);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-text { font-size: 15px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--gray-900); color: #fff;
+    border-radius: var(--radius-sm); padding: 14px 20px;
+    font-size: 14px; font-weight: 500;
+    display: flex; align-items: center; gap: 10px;
+    transform: translateY(100px); opacity: 0;
+    transition: all 0.3s; z-index: 999;
+    max-width: 340px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { background: var(--green); }
+  .toast.error { background: var(--red); }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5); z-index: 200;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: #fff; border-radius: var(--radius);
+    padding: 28px; max-width: 440px; width: 90%;
+    box-shadow: var(--shadow-lg);
+  }
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px; font-weight: 700;
+    margin-bottom: 12px; color: var(--gray-900);
+  }
+  .modal-body { font-size: 14px; color: var(--gray-600); margin-bottom: 20px; line-height: 1.6; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+  /* RESPONSIVE */
+  @media (max-width: 640px) {
+    .main { padding: 20px 16px; }
+    .rules-grid { grid-template-columns: 1fr; }
+    .execute-summary { grid-template-columns: repeat(2, 1fr); }
+    .steps-bar { gap: 0; }
+    .step { font-size: 11px; padding: 8px 10px; }
+    .step span:not(.step-num) { display: none; }
+    .auth-title { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">
+    <div class="logo-icon">🗂️</div>
+    DriveOrganizer IA
+  </div>
+  <div class="header-right">
+    <div class="user-badge" id="user-badge" style="display:none;">
+      <div class="user-avatar" id="user-initials">E</div>
+      <span id="user-name-display">Ernandes</span>
+    </div>
+  </div>
+</header>
+
+<!-- AUTH -->
+<div class="main" id="auth-screen">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:65vh;text-align:center;gap:20px;">
+    <div class="auth-icon">🗂️</div>
+    <div class="auth-title">Organize seu GDrive<br>com Inteligencia Artificial</div>
+    <div class="auth-sub">A IA le o conteudo de cada arquivo, sugere nomes padronizados, identifica versoes mais recentes e organiza tudo em lote. Voce aprova antes de qualquer alteracao.</div>
+    <div class="features-row">
+      <div class="feature-chip">🤖 IA le o conteudo</div>
+      <div class="feature-chip">📦 Aprovacao em lote</div>
+      <div class="feature-chip">🗄️ Engavetamento organizado</div>
+      <div class="feature-chip">🔒 Seguro e reversivel</div>
+    </div>
+    <button class="btn-google" onclick="handleGoogleLogin()">
+      <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Entrar com Google
+    </button>
+    <div style="font-size:12px;color:var(--gray-400);">Seus arquivos nao sao transferidos para servidores externos. O processamento e feito diretamente via API do Google Drive.</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="main" id="app-screen">
+
+  <!-- STEPS -->
+  <div class="steps-bar">
+    <div class="step active" id="step-1"><span class="step-num">1</span><span>Pasta</span></div>
+    <div class="step" id="step-2"><span class="step-num">2</span><span>Regras</span></div>
+    <div class="step" id="step-3"><span class="step-num">3</span><span>Analise IA</span></div>
+    <div class="step" id="step-4"><span class="step-num">4</span><span>Revisao</span></div>
+    <div class="step" id="step-5"><span class="step-num">5</span><span>Executar</span></div>
+  </div>
+
+  <!-- PANEL 1: FOLDER -->
+  <div class="panel active" id="panel-1">
+    <div class="section-title">Selecionar pasta</div>
+    <div class="section-sub">Escolha qual pasta do Google Drive deseja organizar. Recomendamos comecar pela ARTIGOS-2026-REVISADOS como piloto.</div>
+    
+    <div class="folder-input-row">
+      <input type="text" class="input-field" id="folder-search" placeholder="Buscar pasta por nome..." />
+      <button class="btn-primary" onclick="searchFolders()">🔍 Buscar</button>
+    </div>
+
+    <div id="folder-list" class="folder-list">
+      <div class="empty-state">
+        <div class="empty-icon">📁</div>
+        <div class="empty-text">Busque uma pasta para comecar</div>
+      </div>
+    </div>
+
+    <div id="selected-folder-info" style="display:none;background:var(--gray-50);border:2px solid var(--green);border-radius:var(--radius-sm);padding:16px;margin-bottom:20px;">
+      <div style="font-weight:600;color:var(--gray-800);margin-bottom:4px;">✅ Pasta selecionada:</div>
+      <div id="selected-folder-name" style="font-size:15px;color:var(--green);font-weight:700;"></div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn-primary" id="btn-next-1" onclick="goStep(2)" disabled>Proximo: Regras de nomenclatura →</button>
+    </div>
+  </div>
+
+  <!-- PANEL 2: RULES -->
+  <div class="panel" id="panel-2">
+    <div class="section-title">Regras de nomenclatura</div>
+    <div class="section-sub">Confirme ou ajuste os prefixos que a IA usara para renomear os arquivos.</div>
+
+    <div class="rules-grid">
+      <div class="rule-card">
+        <div class="rule-card-header">
+          <div class="rule-badge blue">ART_</div>
+          <div class="rule-label">Artigo cientifico</div>
+        </div>
+        <div style="font-size:13px;color:var(--gray-500);">Manuscritos, drafts, versoes submetidas ou publicadas.</div>
+        <div class="rule-example">ART_Carbono-Pantanal_2026</div>
+      </div>
+      <div class="rule-card">
+        <div class="rule-card-header">
+          <div class="rule-badge green">DADOS_</div>
+          <div class="rule-label">Dados brutos / planilhas</div>
+        </div>
+        <div style="font-size:13px;color:var(--gray-500);">Bases de dados, planilhas, outputs de analise.</div>
+        <div class="rule-example">DADOS_Obitos-MT_2000-2025</div>
+      </div>
+      <div class="rule-card">
+        <div class="rule-card-header">
+          <div class="rule-badge purple">DOCS_</div>
+          <div class="rule-label">Documentos administrativos</div>
+        </div>
+        <div style="font-size:13px;color:var(--gray-500);">Contratos, relatorios institucionais, ofícios.</div>
+        <div class="rule-example">DOCS_UNESCO-Relatorio_2026</div>
+      </div>
+      <div class="rule-card">
+        <div class="rule-card-header">
+          <div class="rule-badge orange">REL_</div>
+          <div class="rule-label">Relatorio tecnico</div>
+        </div>
+        <div style="font-size:13px;color:var(--gray-500);">Relatorios de pesquisa, tecnicos ou de extensao.</div>
+        <div class="rule-example">REL_Transforma-Acoes_2026</div>
+      </div>
+      <div class="rule-card">
+        <div class="rule-card-header">
+          <div class="rule-badge" style="background:#0EA5E9;">CERT_</div>
+          <div class="rule-label">Certificado / comprovante</div>
+        </div>
+        <div style="font-size:13px;color:var(--gray-500);">Certificados de evento, publicacao, premiacao.</div>
+        <div class="rule-example">CERT_Congresso-UNEMAT_2026</div>
+      </div>
+      <div class="rule-card">
+        <div class="rule-card-header">
+          <div class="rule-badge red">OLD_</div>
+          <div class="rule-label">Versao antiga (engavetada)</div>
+        </div>
+        <div style="font-size:13px;color:var(--gray-500);">Versoes anteriores movidas para arquivo morto.</div>
+        <div class="rule-example">OLD_v1_ART_Carbono_2025</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <div style="font-weight:600;font-size:14px;color:var(--gray-700);margin-bottom:8px;">Estrutura do Arquivo Morto (engavetamento organizado):</div>
+      <div class="archive-preview">
+        <div class="archive-tree">
+          <div class="folder">📁 _ARQUIVO-MORTO/</div>
+          <div class="file">📁 Artigos-Versoes-Antigas/</div>
+          <div class="file">📁 Dados-Brutos-Antigos/</div>
+          <div class="file">📁 Duplicatas/</div>
+          <div class="file">📁 Documentos-Administrativos-Antigos/</div>
+          <div class="file">📁 Para-Revisar/</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn-secondary" onclick="goStep(1)">← Voltar</button>
+      <button class="btn-primary" onclick="startAnalysis()">🤖 Iniciar analise com IA →</button>
+    </div>
+  </div>
+
+  <!-- PANEL 3: ANALYSIS -->
+  <div class="panel" id="panel-3">
+    <div class="section-title">Analisando arquivos com IA</div>
+    <div class="section-sub">A IA esta lendo o conteudo de cada arquivo e sugerindo nomes padronizados. Isso pode levar alguns minutos.</div>
+
+    <div class="progress-box">
+      <div class="progress-title" id="progress-title">Iniciando analise...</div>
+      <div class="progress-sub" id="progress-sub">Conectando ao Google Drive</div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progress-bar"></div>
+      </div>
+      <div class="progress-status" id="progress-status">0 / 0 arquivos processados</div>
+      <div class="progress-log" id="progress-log"></div>
+    </div>
+  </div>
+
+  <!-- PANEL 4: REVIEW -->
+  <div class="panel" id="panel-4">
+    <div class="section-title">Revisao em lote</div>
+    <div class="section-sub">Revise as sugestoes da IA. Edite nomes, mude acoes e aprove em lote antes de executar.</div>
+
+    <div class="table-toolbar">
+      <button class="filter-btn active" onclick="filterTable('todos',this)">Todos <span id="count-todos" style="font-weight:700;"></span></button>
+      <button class="filter-btn" onclick="filterTable('ART',this)">Artigos</button>
+      <button class="filter-btn" onclick="filterTable('DADOS',this)">Dados</button>
+      <button class="filter-btn" onclick="filterTable('DOCS',this)">Documentos</button>
+      <button class="filter-btn" onclick="filterTable('engavetar',this)">Engavetar</button>
+    </div>
+
+    <div class="select-all-row">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--gray-600);">
+        <input type="checkbox" id="select-all-cb" class="cb" onchange="selectAll(this)">
+        Selecionar todos visiveis
+      </label>
+      <span class="selected-count" id="selected-count-label"></span>
+      <button class="bulk-btn approve" onclick="bulkAction('renomear')">✅ Aprovar renomeacao</button>
+      <button class="bulk-btn archive" onclick="bulkAction('engavetar')">📦 Engavetar</button>
+      <button class="bulk-btn delete" onclick="bulkAction('excluir')">🗑️ Excluir</button>
+      <button class="bulk-btn" onclick="bulkAction('manter')">⏸️ Manter</button>
+    </div>
+
+    <div class="table-wrap">
+      <table id="review-table">
+        <thead>
+          <tr>
+            <th style="width:36px;"></th>
+            <th>Arquivo atual → Nome sugerido</th>
+            <th style="width:90px;">Tipo</th>
+            <th style="width:80px;">Confianca</th>
+            <th style="width:140px;">Acao</th>
+          </tr>
+        </thead>
+        <tbody id="review-tbody"></tbody>
+      </table>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn-secondary" onclick="goStep(2)">← Voltar</button>
+      <button class="btn-primary" onclick="goStep(5)">Proximo: Executar →</button>
+    </div>
+  </div>
+
+  <!-- PANEL 5: EXECUTE -->
+  <div class="panel" id="panel-5">
+    <div class="section-title">Executar organizacao</div>
+    <div class="section-sub">Revise o resumo final antes de confirmar. Esta acao pode ser desfeita movendo arquivos de volta do Arquivo Morto.</div>
+
+    <div class="execute-summary" id="execute-summary"></div>
+
+    <div class="execute-warning">
+      <span>⚠️</span>
+      <div><strong>Importante:</strong> Arquivos marcados como "Excluir" irao para a Lixeira do Google Drive, onde ficam por 30 dias antes de serem removidos definitivamente. Voce pode restaura-los durante esse periodo.</div>
+    </div>
+
+    <div id="archive-final-preview" style="margin-bottom:20px;"></div>
+
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+      <button class="btn-execute" onclick="executeActions()">
+        ⚡ Executar agora
+      </button>
+      <button class="btn-secondary" onclick="goStep(4)">← Revisar novamente</button>
+    </div>
+
+    <div id="execution-progress" style="display:none;margin-top:24px;">
+      <div class="progress-box">
+        <div class="progress-title">Executando...</div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" id="exec-bar"></div>
+        </div>
+        <div class="progress-status" id="exec-status"></div>
+        <div class="progress-log" id="exec-log"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MODAL CONFIRM -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Confirmar acao</div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn-primary" id="modal-confirm-btn">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+const STATE = {
+  accessToken: null,
+  userInfo: null,
+  selectedFolder: null,
+  analysisResults: [],
+  currentFilter: 'todos',
+  selectedRows: new Set()
+};
+
+// ============================================================
+// GOOGLE AUTH (OAuth2 Implicit Flow - no backend needed)
+// ============================================================
+const CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID'; // Substituir pelo Client ID do usuario
+const SCOPES = 'https://www.googleapis.com/auth/drive';
+
+function handleGoogleLogin() {
+  // Para GitHub Pages: usar OAuth2 implicit flow
+  // INSTRUCOES PARA CONFIGURAR:
+  // 1. Acesse console.cloud.google.com
+  // 2. Crie um projeto > Ative Drive API
+  // 3. Credenciais > Criar ID do cliente OAuth > Aplicativo da Web
+  // 4. Adicione seu GitHub Pages URL como "Origem JavaScript autorizada"
+  // 5. Cole o Client ID na variavel CLIENT_ID acima
+
+  if (CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID') {
+    // MODO DEMO para testes
+    showToast('⚠️ Configure o Client ID do Google para conectar ao Drive real', 'error');
+    // Ativar modo demo
+    STATE.accessToken = 'DEMO_MODE';
+    STATE.userInfo = { name: 'Ernandes Sobreira', email: 'ernandes.sobreira@gmail.com' };
+    activateApp();
+    return;
+  }
+
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+    `client_id=${CLIENT_ID}` +
+    `&redirect_uri=${encodeURIComponent(window.location.href)}` +
+    `&response_type=token` +
+    `&scope=${encodeURIComponent(SCOPES)}` +
+    `&prompt=consent`;
+
+  window.location.href = authUrl;
+}
+
+// Handle redirect back from Google
+function handleOAuthRedirect() {
+  const hash = window.location.hash;
+  if (!hash) return;
+  const params = new URLSearchParams(hash.substring(1));
+  const token = params.get('access_token');
+  if (!token) return;
+  STATE.accessToken = token;
+  history.replaceState(null, '', window.location.pathname);
+  fetchUserInfo();
+}
+
+async function fetchUserInfo() {
+  try {
+    const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${STATE.accessToken}` }
+    });
+    STATE.userInfo = await r.json();
+    activateApp();
+  } catch(e) {
+    showToast('Erro ao obter informacoes do usuario', 'error');
+  }
+}
+
+function activateApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+  const badge = document.getElementById('user-badge');
+  badge.style.display = 'flex';
+  const name = STATE.userInfo.name || STATE.userInfo.email;
+  document.getElementById('user-name-display').textContent = name.split(' ')[0];
+  document.getElementById('user-initials').textContent = name[0].toUpperCase();
+}
+
+// ============================================================
+// GOOGLE DRIVE API
+// ============================================================
+async function driveRequest(url, opts={}) {
+  if (STATE.accessToken === 'DEMO_MODE') return null;
+  const r = await fetch(url, {
+    ...opts,
+    headers: {
+      Authorization: `Bearer ${STATE.accessToken}`,
+      'Content-Type': 'application/json',
+      ...opts.headers
+    }
+  });
+  if (!r.ok) throw new Error(`Drive API error: ${r.status}`);
+  return r.json();
+}
+
+async function searchDriveFolders(query) {
+  const q = encodeURIComponent(`mimeType='application/vnd.google-apps.folder' and name contains '${query}' and trashed=false`);
+  const data = await driveRequest(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,modifiedTime,parents)&pageSize=20`);
+  return data ? data.files : [];
+}
+
+async function listFolderContents(folderId) {
+  const q = encodeURIComponent(`'${folderId}' in parents and trashed=false`);
+  const data = await driveRequest(
+    `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,mimeType,modifiedTime,size)&pageSize=100&orderBy=modifiedTime desc`
+  );
+  return data ? data.files : [];
+}
+
+async function getDocContent(fileId) {
+  const data = await driveRequest(
+    `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=text/plain`
+  );
+  return data;
+}
+
+async function renameFile(fileId, newName) {
+  return driveRequest(
+    `https://www.googleapis.com/drive/v3/files/${fileId}`,
+    { method: 'PATCH', body: JSON.stringify({ name: newName }) }
+  );
+}
+
+async function moveFile(fileId, newParentId, oldParentId) {
+  return driveRequest(
+    `https://www.googleapis.com/drive/v3/files/${fileId}?addParents=${newParentId}&removeParents=${oldParentId}`,
+    { method: 'PATCH', body: JSON.stringify({}) }
+  );
+}
+
+async function createFolder(name, parentId) {
+  return driveRequest(
+    `https://www.googleapis.com/drive/v3/files`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        name, mimeType: 'application/vnd.google-apps.folder',
+        parents: [parentId]
+      })
+    }
+  );
+}
+
+async function trashFile(fileId) {
+  return driveRequest(
+    `https://www.googleapis.com/drive/v3/files/${fileId}`,
+    { method: 'PATCH', body: JSON.stringify({ trashed: true }) }
+  );
+}
+
+// ============================================================
+// FOLDER SEARCH UI
+// ============================================================
+async function searchFolders() {
+  const q = document.getElementById('folder-search').value.trim();
+  if (!q) return;
+  const list = document.getElementById('folder-list');
+  list.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-text">Buscando...</div></div>';
+
+  if (STATE.accessToken === 'DEMO_MODE') {
+    // DEMO DATA
+    const demoFolders = [
+      { id: 'demo1', name: 'ARTIGOS-2026-REVISADOS', modifiedTime: '2026-03-30T19:58:25Z' },
+      { id: 'demo2', name: 'PROJETOS-EXTENSAO', modifiedTime: '2026-03-15T10:00:00Z' },
+      { id: 'demo3', name: 'DADOS-PANTANAL', modifiedTime: '2026-02-20T08:00:00Z' }
+    ];
+    renderFolderList(demoFolders.filter(f => f.name.toLowerCase().includes(q.toLowerCase())));
+    return;
+  }
+
+  try {
+    const folders = await searchDriveFolders(q);
+    renderFolderList(folders);
+  } catch(e) {
+    showToast('Erro ao buscar pastas: ' + e.message, 'error');
+  }
+}
+
+function renderFolderList(folders) {
+  const list = document.getElementById('folder-list');
+  if (!folders.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">Nenhuma pasta encontrada</div></div>';
+    return;
+  }
+  list.innerHTML = folders.map(f => `
+    <div class="folder-item ${STATE.selectedFolder?.id === f.id ? 'selected' : ''}"
+         onclick="selectFolder(${JSON.stringify(f).replace(/"/g,'&quot;')})">
+      <span class="folder-icon">📁</span>
+      <span class="folder-name">${f.name}</span>
+      <span class="folder-meta">${f.modifiedTime ? new Date(f.modifiedTime).toLocaleDateString('pt-BR') : ''}</span>
+    </div>
+  `).join('');
+}
+
+function selectFolder(folder) {
+  STATE.selectedFolder = folder;
+  document.querySelectorAll('.folder-item').forEach(el => el.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+  const info = document.getElementById('selected-folder-info');
+  info.style.display = 'block';
+  document.getElementById('selected-folder-name').textContent = folder.name;
+  document.getElementById('btn-next-1').disabled = false;
+}
+
+// ============================================================
+// ANALYSIS WITH AI
+// ============================================================
+async function startAnalysis() {
+  goStep(3);
+  const log = document.getElementById('progress-log');
+  const bar = document.getElementById('progress-bar');
+  const status = document.getElementById('progress-status');
+  const title = document.getElementById('progress-title');
+  const sub = document.getElementById('progress-sub');
+
+  STATE.analysisResults = [];
+  log.innerHTML = '';
+
+  function addLog(msg, color='#00C896') {
+    log.innerHTML += `<span style="color:${color}">${msg}</span>\n`;
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function setProgress(pct, statusText) {
+    bar.style.width = pct + '%';
+    status.textContent = statusText;
+  }
+
+  addLog('🔗 Conectando ao Google Drive...');
+  await sleep(600);
+
+  let files = [];
+  if (STATE.accessToken === 'DEMO_MODE') {
+    files = getDemoFiles();
+    addLog(`📁 Pasta: ${STATE.selectedFolder.name}`, '#94A3B8');
+    addLog(`📄 ${files.length} arquivos encontrados`);
+  } else {
+    try {
+      files = await listFolderContents(STATE.selectedFolder.id);
+      addLog(`📁 Pasta: ${STATE.selectedFolder.name}`, '#94A3B8');
+      addLog(`📄 ${files.length} arquivos/pastas encontrados`);
+    } catch(e) {
+      addLog('❌ Erro: ' + e.message, '#EF4444');
+      return;
+    }
+  }
+
+  title.textContent = 'Analisando com IA...';
+  sub.textContent = 'Lendo conteudo de cada arquivo';
+
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    const pct = Math.round(((i+1)/files.length)*100);
+    setProgress(pct, `${i+1} / ${files.length} arquivos processados`);
+    addLog(`🔍 Analisando: ${f.name}...`, '#CBD5E1');
+    await sleep(200);
+
+    let content = '';
+    if (STATE.accessToken !== 'DEMO_MODE' && f.mimeType === 'application/vnd.google-apps.document') {
+      try {
+        const text = await getDocContent(f.id);
+        content = typeof text === 'string' ? text.substring(0, 2000) : '';
+      } catch(e) {}
+    } else {
+      content = f.demoContent || '';
+    }
+
+    const suggestion = await analyzeWithAI(f, content);
+    STATE.analysisResults.push({ ...f, ...suggestion });
+    addLog(`✅ ${f.name} → ${suggestion.suggestedName}`, '#00C896');
+    await sleep(100);
+  }
+
+  title.textContent = 'Analise concluida!';
+  sub.textContent = `${files.length} arquivos analisados com sucesso`;
+  setProgress(100, `${files.length} / ${files.length} arquivos processados`);
+  addLog('', '');
+  addLog('🎉 Analise completa! Clique em Revisao para aprovar as sugestoes.', '#00C896');
+
+  await sleep(1000);
+  renderReviewTable();
+  goStep(4);
+}
+
+async function analyzeWithAI(file, content) {
+  // Se modo demo, usar dados pre-definidos
+  if (STATE.accessToken === 'DEMO_MODE' && file.suggestion) {
+    return file.suggestion;
+  }
+
+  // Chamada real para Claude via Anthropic API
+  try {
+    const prompt = `Voce e um organizador inteligente de arquivos cientificos de um professor-pesquisador brasileiro (Pantanal, biologia, ecologia, saude ambiental).
+
+Nome atual do arquivo: "${file.name}"
+Tipo MIME: ${file.mimeType || 'desconhecido'}
+Data de modificacao: ${file.modifiedTime || 'desconhecida'}
+Conteudo (primeiros 1500 chars): ${content || '(nao disponivel)'}
+
+Regras de nomenclatura:
+- ART_ = artigo cientifico (manuscrito, draft, versao submetida)
+- DADOS_ = dados brutos, planilhas, outputs de analise
+- DOCS_ = documentos administrativos (contratos, oficios, relatorios institucionais)
+- REL_ = relatorio tecnico de pesquisa ou extensao
+- CERT_ = certificado ou comprovante
+- Formato: PREFIXO_Titulo-Curto-Sem-Acento_ANO (max 5 palavras no titulo)
+
+Responda APENAS com JSON valido, sem markdown:
+{
+  "suggestedName": "PREFIXO_Titulo-Curto_ANO",
+  "type": "ART|DADOS|DOCS|REL|CERT|?",
+  "confidence": "alta|media|baixa",
+  "action": "renomear|engavetar|manter",
+  "reason": "motivo curto em portugues"
+}`;
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await response.json();
+    const text = data.content?.[0]?.text || '{}';
+    const clean = text.replace(/```json|```/g, '').trim();
+    return JSON.parse(clean);
+  } catch(e) {
+    // Fallback: analise local simples
+    return localAnalysis(file);
+  }
+}
+
+function localAnalysis(file) {
+  const name = file.name.toLowerCase();
+  let type = '?', prefix = '', action = 'renomear', confidence = 'media';
+
+  if (name.includes('artigo') || name.includes('paper') || name.includes('manuscript') || name.includes('posdoc')) {
+    type = 'ART'; prefix = 'ART_'; confidence = 'alta';
+  } else if (name.includes('dado') || name.includes('data') || name.includes('planilha') || name.includes('obito')) {
+    type = 'DADOS'; prefix = 'DADOS_'; confidence = 'alta';
+  } else if (name.includes('cert')) {
+    type = 'CERT'; prefix = 'CERT_'; confidence = 'alta';
+  } else if (name.includes('rel') || name.includes('relat')) {
+    type = 'REL'; prefix = 'REL_'; confidence = 'media';
+  } else if (name.includes('doc') || name.includes('documento')) {
+    type = 'DOCS'; prefix = 'DOCS_'; confidence = 'media';
+  }
+
+  if (name === 'nova pasta' || name.trim() === '') {
+    action = 'engavetar'; confidence = 'baixa';
+  }
+
+  const cleanName = file.name
+    .replace(/^[0-9]+/,'')
+    .replace(/posdoc[-_]?/gi,'')
+    .replace(/artigo[-_]?/gi,'')
+    .replace(/[-_ ]+/g,'-')
+    .replace(/[^a-zA-Z0-9\-]/g,'')
+    .substring(0, 30)
+    .replace(/^-+|-+$/g,'') || 'Sem-Nome';
+
+  const year = new Date(file.modifiedTime || '').getFullYear() || '2026';
+
+  return {
+    suggestedName: `${prefix}${cleanName}_${year}`,
+    type, confidence, action,
+    reason: 'Analise pelo nome do arquivo'
+  };
+}
+
+// ============================================================
+// DEMO DATA
+// ============================================================
+function getDemoFiles() {
+  return [
+    { id: 'd1', name: 'ash_paper', mimeType: 'application/vnd.google-apps.folder', modifiedTime: '2026-03-30T19:41:01Z',
+      suggestion: { suggestedName: 'ART_Cinzas-Pantanal_2026', type: 'ART', confidence: 'alta', action: 'renomear', reason: 'Pasta de artigo sobre cinzas no Pantanal' } },
+    { id: 'd2', name: 'posdoc-pm2.5pantanal94municipios', mimeType: 'application/vnd.google-apps.folder', modifiedTime: '2026-03-30T17:55:27Z',
+      suggestion: { suggestedName: 'ART_PM25-Pantanal-94mun_2026', type: 'ART', confidence: 'alta', action: 'renomear', reason: 'Artigo sobre PM2.5 em 94 municipios do Pantanal' } },
+    { id: 'd3', name: 'posdoc-pm2.5pantanal94municípios', mimeType: 'application/vnd.google-apps.folder', modifiedTime: '2026-03-22T15:29:27Z',
+      suggestion: { suggestedName: 'ART_PM25-Pantanal-94mun_2026', type: 'ART', confidence: 'alta', action: 'engavetar', reason: 'Duplicata com acento - versao mais antiga' } },
+    { id: 'd4', name: '3posdoc-analises-cuiaba-temp-mort', mimeType: 'application/vnd.google-apps.folder', modifiedTime: '2026-03-30T17:48:43Z',
+      suggestion: { suggestedName: 'ART_Mortalidade-Temp-Cuiaba_2026', type: 'ART', confidence: 'alta', action: 'renomear', reason: 'Artigo sobre mortalidade e temperatura em Cuiaba' } },
+    { id: 'd5', name: '4posdoc-pantanal-climatepaper', mimeType: 'application/vnd.google-apps.folder', modifiedTime: '2026-03-29T18:25:19Z',
+      suggestion: { suggestedName: 'ART_Clima-Pantanal-Planalto-Planicie_2026', type: 'ART', confidence: 'alta', action: 'renomear', reason: 'Artigo sobre clima do Pantanal comparando unidades fisiograficas' } },
+    { id: 'd6', name: '1posdocARTIGO LUCIENE - PARTE 2', mimeType: 'application/vnd.google-apps.folder', modifiedTime: '2026-03-29T17:37:12Z',
+      suggestion: { suggestedName: 'ART_Estresse-Termico-Caceres-P2_2026', type: 'ART', confidence: 'media', action: 'engavetar', reason: 'Duplicata - versao mais antiga de artigo da Luciene' } },
+    { id: 'd7', name: '2posdoc-caceres-temperatura', mimeType: 'application/vnd.google-apps.folder', modifiedTime: '2026-03-26T18:51:09Z',
+      suggestion: { suggestedName: 'ART_Temperatura-Caceres_2026', type: 'ART', confidence: 'alta', action: 'renomear', reason: 'Artigo sobre temperatura em Caceres' } },
+    { id: 'd8', name: 'artigo - PECS', mimeType: 'application/vnd.google-apps.folder', modifiedTime: '2026-03-25T20:48:37Z',
+      suggestion: { suggestedName: 'ART_PECS-Pantanal_2026', type: 'ART', confidence: 'media', action: 'renomear', reason: 'Artigo relacionado a PECS' } },
+    { id: 'd9', name: 'artigo_resiliencia_pantanal', mimeType: 'application/vnd.google-apps.folder', modifiedTime: '2026-03-25T17:24:49Z',
+      suggestion: { suggestedName: 'ART_Resiliencia-Pantanal_2026', type: 'ART', confidence: 'alta', action: 'renomear', reason: 'Artigo sobre resiliencia do Pantanal' } },
+    { id: 'd10', name: 'ARTIGO LUCIENE - PARTE 2', mimeType: 'application/vnd.google-apps.folder', modifiedTime: '2026-03-24T23:18:19Z',
+      suggestion: { suggestedName: 'ART_Estresse-Termico-Caceres-P2_2026', type: 'ART', confidence: 'alta', action: 'renomear', reason: 'Artigo Parte 2 - Luciene - versao principal' } },
+    { id: 'd11', name: 'artigo_bibliometria', mimeType: 'application/vnd.google-apps.folder', modifiedTime: '2026-03-24T21:30:31Z',
+      suggestion: { suggestedName: 'ART_Bibliometria-SDGs_2026', type: 'ART', confidence: 'alta', action: 'renomear', reason: 'Artigo de bibliometria sobre SDGs' } },
+    { id: 'd12', name: 'Artigos André-Liliane', mimeType: 'application/vnd.google-apps.folder', modifiedTime: '2026-03-24T19:27:47Z',
+      suggestion: { suggestedName: 'ART_Andre-Liliane_2026', type: 'ART', confidence: 'baixa', action: 'renomear', reason: 'Nome de pessoas - titulo real nao identificado' } },
+    { id: 'd13', name: 'artigo_taiama_completo', mimeType: 'application/vnd.google-apps.folder', modifiedTime: '2026-03-22T15:29:30Z',
+      suggestion: { suggestedName: 'ART_Taiama-Pantanal_2026', type: 'ART', confidence: 'alta', action: 'renomear', reason: 'Artigo completo sobre Taiama no Pantanal' } },
+    { id: 'd14', name: 'óbitos MT de 2000 a 2025', mimeType: 'application/vnd.google-apps.folder', modifiedTime: '2026-03-22T15:29:27Z',
+      suggestion: { suggestedName: 'DADOS_Obitos-MT_2000-2025', type: 'DADOS', confidence: 'alta', action: 'renomear', reason: 'Base de dados de obitos de MT - nao e artigo' } },
+    { id: 'd15', name: 'Nova pasta', mimeType: 'application/vnd.google-apps.folder', modifiedTime: '2026-03-26T12:35:26Z',
+      suggestion: { suggestedName: '?_Sem-Nome_2026', type: '?', confidence: 'baixa', action: 'engavetar', reason: 'Pasta sem nome - verificar conteudo antes' } },
+    { id: 'd16', name: 'artigo LUCIENE', mimeType: 'application/vnd.google-apps.folder', modifiedTime: '2026-03-22T15:34:59Z',
+      suggestion: { suggestedName: 'ART_Estresse-Termico-Caceres-P1_2026', type: 'ART', confidence: 'media', action: 'renomear', reason: 'Artigo Parte 1 - Luciene - provavel Parte 1' } },
+    { id: 'd17', name: 'artigo perda de área mun pantanal', mimeType: 'application/vnd.google-apps.folder', modifiedTime: '2026-03-22T15:34:52Z',
+      suggestion: { suggestedName: 'ART_Perda-Area-Municipios-Pantanal_2026', type: 'ART', confidence: 'alta', action: 'renomear', reason: 'Artigo sobre perda de area dos municipios do Pantanal' } },
+    { id: 'd18', name: 'POSDOC-TEMPERATURA PANTANAL-PLANALTOEPLANICIE', mimeType: 'application/vnd.google-apps.folder', modifiedTime: '2026-03-22T15:43:15Z',
+      suggestion: { suggestedName: 'ART_Temp-Pantanal-Planalto-Planicie_2026', type: 'ART', confidence: 'alta', action: 'renomear', reason: 'Artigo de pos-doc sobre temperatura Pantanal' } },
+    { id: 'd19', name: 'POSDOC-ERNANDES_DOCUMENTOS', mimeType: 'application/vnd.google-apps.folder', modifiedTime: '2026-03-26T12:35:35Z',
+      suggestion: { suggestedName: 'DOCS_Posdoc-Ernandes_2026', type: 'DOCS', confidence: 'alta', action: 'renomear', reason: 'Documentos administrativos do pos-doc' } },
+    { id: 'd20', name: 'POSDOC-ERNANDES-FINAL-ARTIGOS', mimeType: 'application/vnd.google-apps.folder', modifiedTime: '2026-03-30T17:48:43Z',
+      suggestion: { suggestedName: 'DOCS_Posdoc-Final-Artigos_2026', type: 'DOCS', confidence: 'media', action: 'manter', reason: 'Possivel pasta-mae - verificar antes de renomear' } }
+  ];
+}
+
+// ============================================================
+// REVIEW TABLE
+// ============================================================
+function renderReviewTable() {
+  const tbody = document.getElementById('review-tbody');
+  document.getElementById('count-todos').textContent = `(${STATE.analysisResults.length})`;
+
+  tbody.innerHTML = STATE.analysisResults.map((f, i) => `
+    <tr id="row-${i}" class="" data-type="${f.type}" data-action="${f.action}">
+      <td><input type="checkbox" class="cb row-cb" data-idx="${i}" onchange="toggleRowSelect(${i},this)"></td>
+      <td>
+        <div class="file-name-old">${f.name}</div>
+        <div id="name-display-${i}" class="file-name-new">
+          ${f.suggestedName}
+          <button class="edit-btn" onclick="editName(${i})" title="Editar nome">✏️</button>
+        </div>
+        <input id="name-input-${i}" class="file-name-edit" style="display:none;"
+          value="${f.suggestedName}"
+          onblur="saveName(${i})"
+          onkeydown="if(event.key==='Enter')saveName(${i})">
+        <div style="font-size:11px;color:var(--gray-400);margin-top:2px;">${f.reason || ''}</div>
+      </td>
+      <td><span class="type-badge type-${f.type}">${f.type}</span></td>
+      <td>
+        <span class="confidence-dot conf-${f.confidence==='alta'?'high':f.confidence==='media'?'mid':'low'}"></span>
+        ${f.confidence || 'media'}
+      </td>
+      <td>
+        <select class="action-select ${f.action}" id="action-${i}"
+          onchange="updateAction(${i},this)">
+          <option value="renomear" ${f.action==='renomear'?'selected':''}>✅ Renomear</option>
+          <option value="manter" ${f.action==='manter'?'selected':''}>⏸️ Manter</option>
+          <option value="engavetar" ${f.action==='engavetar'?'selected':''}>📦 Engavetar</option>
+          <option value="excluir" ${f.action==='excluir'?'selected':''}>🗑️ Excluir</option>
+        </select>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function editName(idx) {
+  document.getElementById(`name-display-${idx}`).style.display = 'none';
+  const input = document.getElementById(`name-input-${idx}`);
+  input.style.display = 'block';
+  input.focus();
+  input.select();
+}
+
+function saveName(idx) {
+  const input = document.getElementById(`name-input-${idx}`);
+  const newName = input.value.trim();
+  STATE.analysisResults[idx].suggestedName = newName;
+  document.getElementById(`name-display-${idx}`).innerHTML =
+    `${newName} <button class="edit-btn" onclick="editName(${idx})" title="Editar nome">✏️</button>`;
+  input.style.display = 'none';
+  document.getElementById(`name-display-${idx}`).style.display = 'block';
+}
+
+function updateAction(idx, sel) {
+  STATE.analysisResults[idx].action = sel.value;
+  sel.className = `action-select ${sel.value}`;
+  const row = document.getElementById(`row-${idx}`);
+  row.dataset.action = sel.value;
+}
+
+function toggleRowSelect(idx, cb) {
+  if (cb.checked) {
+    STATE.selectedRows.add(idx);
+    document.getElementById(`row-${idx}`).classList.add('selected-row');
+  } else {
+    STATE.selectedRows.delete(idx);
+    document.getElementById(`row-${idx}`).classList.remove('selected-row');
+  }
+  updateSelectedCount();
+}
+
+function selectAll(cb) {
+  const visible = getVisibleRows();
+  visible.forEach(idx => {
+    STATE.selectedRows[cb.checked ? 'add' : 'delete'](idx);
+    document.getElementById(`row-${idx}`).classList[cb.checked ? 'add' : 'remove']('selected-row');
+    const rowCb = document.querySelector(`[data-idx="${idx}"]`);
+    if (rowCb) rowCb.checked = cb.checked;
+  });
+  updateSelectedCount();
+}
+
+function updateSelectedCount() {
+  const n = STATE.selectedRows.size;
+  document.getElementById('selected-count-label').textContent = n > 0 ? `${n} selecionados` : '';
+}
+
+function getVisibleRows() {
+  const rows = document.querySelectorAll('#review-tbody tr');
+  return Array.from(rows)
+    .filter(r => r.style.display !== 'none')
+    .map(r => parseInt(r.id.replace('row-','')));
+}
+
+function filterTable(type, btn) {
+  STATE.currentFilter = type;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const rows = document.querySelectorAll('#review-tbody tr');
+  rows.forEach(row => {
+    if (type === 'todos') {
+      row.style.display = '';
+    } else if (type === 'engavetar') {
+      row.style.display = row.dataset.action === 'engavetar' ? '' : 'none';
+    } else {
+      row.style.display = row.dataset.type === type ? '' : 'none';
+    }
+  });
+}
+
+function bulkAction(action) {
+  if (STATE.selectedRows.size === 0) {
+    showToast('Selecione ao menos um arquivo', 'error');
+    return;
+  }
+  STATE.selectedRows.forEach(idx => {
+    STATE.analysisResults[idx].action = action;
+    const sel = document.getElementById(`action-${idx}`);
+    if (sel) { sel.value = action; sel.className = `action-select ${action}`; }
+    const row = document.getElementById(`row-${idx}`);
+    if (row) row.dataset.action = action;
+  });
+  showToast(`✅ ${STATE.selectedRows.size} arquivos: acao "${action}" aplicada`);
+}
+
+// ============================================================
+// EXECUTE
+// ============================================================
+function goStep(n) {
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById(`panel-${i}`).classList.remove('active');
+    const s = document.getElementById(`step-${i}`);
+    s.classList.remove('active', 'done');
+    if (i < n) s.classList.add('done');
+    else if (i === n) s.classList.add('active');
+  }
+  document.getElementById(`panel-${n}`).classList.add('active');
+  if (n === 5) renderExecuteSummary();
+  window.scrollTo(0, 0);
+}
+
+function renderExecuteSummary() {
+  const r = STATE.analysisResults;
+  const renomear = r.filter(f => f.action === 'renomear').length;
+  const engavetar = r.filter(f => f.action === 'engavetar').length;
+  const excluir = r.filter(f => f.action === 'excluir').length;
+  const manter = r.filter(f => f.action === 'manter').length;
+
+  document.getElementById('execute-summary').innerHTML = `
+    <div class="summary-card green">
+      <div class="summary-num">${renomear}</div>
+      <div class="summary-label">Renomear</div>
+    </div>
+    <div class="summary-card orange">
+      <div class="summary-num">${engavetar}</div>
+      <div class="summary-label">Engavetar</div>
+    </div>
+    <div class="summary-card red">
+      <div class="summary-num">${excluir}</div>
+      <div class="summary-label">Excluir</div>
+    </div>
+    <div class="summary-card blue">
+      <div class="summary-num">${manter}</div>
+      <div class="summary-label">Manter</div>
+    </div>
+  `;
+
+  // Archive tree preview
+  const toArchive = r.filter(f => f.action === 'engavetar');
+  if (toArchive.length > 0) {
+    document.getElementById('archive-final-preview').innerHTML = `
+      <div class="archive-preview">
+        <div class="archive-title">📦 Estrutura do Arquivo Morto</div>
+        <div class="archive-tree">
+          <div class="folder">📁 _ARQUIVO-MORTO/</div>
+          ${toArchive.map(f => `<div class="file">📄 ${f.suggestedName || f.name}</div>`).join('')}
+        </div>
+      </div>
+    `;
+  }
+}
+
+async function executeActions() {
+  const toRename = STATE.analysisResults.filter(f => f.action === 'renomear');
+  const toArchive = STATE.analysisResults.filter(f => f.action === 'engavetar');
+  const toDelete = STATE.analysisResults.filter(f => f.action === 'excluir');
+
+  if (toDelete.length > 0) {
+    const confirmed = await showModal(
+      'Confirmar exclusao',
+      `Voce vai excluir ${toDelete.length} arquivo(s). Eles irao para a Lixeira do Google Drive por 30 dias. Confirma?`
+    );
+    if (!confirmed) return;
+  }
+
+  document.getElementById('execution-progress').style.display = 'block';
+  const bar = document.getElementById('exec-bar');
+  const status = document.getElementById('exec-status');
+  const log = document.getElementById('exec-log');
+  log.innerHTML = '';
+
+  function addLog(msg, color='#00C896') {
+    log.innerHTML += `<span style="color:${color}">${msg}</span>\n`;
+    log.scrollTop = log.scrollHeight;
+  }
+
+  const total = toRename.length + toArchive.length + toDelete.length;
+  let done = 0;
+
+  if (STATE.accessToken === 'DEMO_MODE') {
+    // DEMO: simular execucao
+    for (const f of [...toRename, ...toArchive, ...toDelete]) {
+      await sleep(300);
+      done++;
+      bar.style.width = Math.round(done/total*100) + '%';
+      status.textContent = `${done} / ${total} operacoes`;
+      if (toRename.includes(f)) addLog(`✅ Renomeado: ${f.name} → ${f.suggestedName}`);
+      else if (toArchive.includes(f)) addLog(`📦 Engavetado: ${f.name}`, '#F59E0B');
+      else addLog(`🗑️ Excluido: ${f.name}`, '#EF4444');
+    }
+    addLog('\n🎉 MODO DEMO - Configure o Client ID do Google para executar no Drive real!', '#00C896');
+    showToast('✅ Demo concluido! Configure o Client ID para usar no Drive real.', 'success');
+    return;
+  }
+
+  // Criar pasta arquivo morto se necessario
+  let archiveFolderId = null;
+  if (toArchive.length > 0) {
+    addLog('📁 Criando estrutura de Arquivo Morto...');
+    try {
+      const af = await createFolder('_ARQUIVO-MORTO', STATE.selectedFolder.id);
+      archiveFolderId = af.id;
+      addLog('✅ Pasta _ARQUIVO-MORTO criada');
+    } catch(e) {
+      addLog('⚠️ Arquivo Morto ja existe ou erro: ' + e.message, '#F59E0B');
+    }
+  }
+
+  // Renomear
+  for (const f of toRename) {
+    try {
+      await renameFile(f.id, f.suggestedName);
+      done++; bar.style.width = Math.round(done/total*100)+'%';
+      status.textContent = `${done} / ${total} operacoes`;
+      addLog(`✅ Renomeado: ${f.name} → ${f.suggestedName}`);
+    } catch(e) {
+      addLog(`❌ Erro ao renomear ${f.name}: ${e.message}`, '#EF4444');
+    }
+    await sleep(200);
+  }
+
+  // Engavetar
+  for (const f of toArchive) {
+    try {
+      if (archiveFolderId) await moveFile(f.id, archiveFolderId, STATE.selectedFolder.id);
+      done++; bar.style.width = Math.round(done/total*100)+'%';
+      status.textContent = `${done} / ${total} operacoes`;
+      addLog(`📦 Engavetado: ${f.name}`, '#F59E0B');
+    } catch(e) {
+      addLog(`❌ Erro ao engavetar ${f.name}: ${e.message}`, '#EF4444');
+    }
+    await sleep(200);
+  }
+
+  // Excluir
+  for (const f of toDelete) {
+    try {
+      await trashFile(f.id);
+      done++; bar.style.width = Math.round(done/total*100)+'%';
+      status.textContent = `${done} / ${total} operacoes`;
+      addLog(`🗑️ Enviado para lixeira: ${f.name}`, '#EF4444');
+    } catch(e) {
+      addLog(`❌ Erro ao excluir ${f.name}: ${e.message}`, '#EF4444');
+    }
+    await sleep(200);
+  }
+
+  addLog('\n🎉 Organizacao concluida com sucesso!');
+  showToast(`✅ ${done} arquivos organizados com sucesso!`, 'success');
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+let modalResolve = null;
+function showModal(title, body) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').textContent = body;
+  document.getElementById('modal-overlay').classList.add('show');
+  return new Promise(res => {
+    modalResolve = res;
+    document.getElementById('modal-confirm-btn').onclick = () => { closeModal(); res(true); };
+  });
+}
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('show');
+  if (modalResolve) { modalResolve(false); modalResolve = null; }
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  handleOAuthRedirect();
+  document.getElementById('folder-search').addEventListener('keydown', e => {
+    if (e.key === 'Enter') searchFolders();
+  });
+});
+</script>
+</body>
+</html>
