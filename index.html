@@ -1187,45 +1187,65 @@ async function analyzeWithAI(file, content, mainDocNameParam) {
   const finalContent = content || '';
   const mainDocName = mainDocNameParam || '';
 
+  // Formatar data de modificacao como DDMMAAAA
+  let dateStr = '2026';
+  if (file.modifiedTime) {
+    const d = new Date(file.modifiedTime);
+    const dd = String(d.getDate()).padStart(2,'0');
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const yyyy = d.getFullYear();
+    dateStr = `${dd}${mm}${yyyy}`;
+  }
+
+  // Nome base sem prefixos conhecidos para evitar duplicacao
+  const nomeBase = file.name
+    .replace(/^(ART|DADOS|DOCS|REL|CERT|FIG|OLD|RESULTS|CBH)[-_]/i, '')
+    .trim();
+
   try {
-    const prompt = `Voce e um organizador inteligente de arquivos cientificos de um professor-pesquisador brasileiro especialista em Pantanal, biologia, ecologia, saude ambiental, qualidade do ar, limnologia, bibliometria.
+    const prompt = `Voce e um organizador de arquivos de um professor-pesquisador brasileiro especialista em Pantanal, biologia, ecologia, limnologia, qualidade do ar, saude ambiental.
 
-ARQUIVO:
-- Nome atual: "${file.name}"
-- Tipo: ${file.mimeType || 'desconhecido'}
-- Data modificacao: ${file.modifiedTime || 'desconhecida'}
-- Documento principal dentro da pasta: "${mainDocName || 'nao identificado'}"
-- Conteudo (primeiros 3000 chars): ${finalContent || '(nao disponivel - usar nome como referencia)'}
+DADOS DO ARQUIVO:
+- Nome original: "${file.name}"
+- Nome sem prefixo: "${nomeBase}"
+- Documento principal dentro da pasta: "${mainDocName}"
+- Data da ultima modificacao: ${file.modifiedTime || 'desconhecida'} (= ${dateStr} em DDMMAAAA)
+- Tipo MIME: ${file.mimeType || 'desconhecido'}
+- Conteudo (primeiros 3000 chars do texto real):
+${finalContent ? finalContent.substring(0, 3000) : '(sem conteudo disponivel - usar nome como referencia)'}
 
-REGRAS DE NOMENCLATURA OBRIGATORIAS:
-- ART_ = artigo cientifico (manuscrito, draft, versao submetida, paper)
-- DADOS_ = dados brutos, planilhas, series temporais, outputs de analise estatistica
-- DOCS_ = documentos administrativos (contratos, oficios, relatorios institucionais, declaracoes)
-- REL_ = relatorio tecnico de pesquisa ou extensao universitaria
-- CERT_ = certificado, comprovante, diploma
-- FIG_ = figuras, graficos, imagens cientificas
-- OLD_ = versoes antigas para engavetamento
+TAREFA:
+1. Leia o conteudo acima e identifique o TEMA REAL do arquivo (nao o nome do arquivo).
+2. Escolha o prefixo correto:
+   - ART_ = artigo cientifico, manuscrito, paper, draft para publicacao
+   - DADOS_ = dados brutos, planilhas, series temporais, outputs estatisticos
+   - DOCS_ = documentos administrativos, contratos, oficios, declaracoes institucionais
+   - REL_ = relatorio tecnico de pesquisa ou extensao universitaria
+   - CERT_ = certificado, comprovante, diploma
+   - FIG_ = figuras, graficos, scripts de figuras cientificas
+3. Crie um titulo curto com 3 a 5 palavras-chave em minusculas, separadas por hifen, SEM acentos, SEM abreviacoes, descrevendo o CONTEUDO REAL.
+   - Substituicoes obrigatorias: a->a, e->e, i->i, o->o, u->u, c->c, a->a, o->o, e->e
+   - Escreva todas as letras das palavras (NUNCA corte: revisoes nao revises, temperatura nao temperat, modelagem nao modelage, estatistica nao estatstica)
+   - NUNCA repita o prefixo no titulo (se escolheu ART_, o titulo nao comeca com art ou artigo)
+   - NUNCA repita palavras no titulo
+4. Use a data ${dateStr} (DDMMAAAA da ultima modificacao) no final.
 
-FORMATO OBRIGATORIO do nome sugerido:
-PREFIXO_Palavras-Chave-Sem-Acento_ANO
-- NUNCA use acentos. Substitua: a=a, e=e, i=i, o=o, u=u, c=c, a=a, o=o, e=e
-- ESCREVA TODAS AS LETRAS, nunca corte palavras. Exemplo: REVISOES (nao REVISES), TEMPERATURA (nao TEMPERAT)
-- Use entre 3 e 6 palavras-chave descritivas e especificas do conteudo
-- Maximo 50 caracteres no total do nome
+FORMATO FINAL OBRIGATORIO:
+PREFIXO_palavra1-palavra2-palavra3_${dateStr}
 
-DECISAO DE ACAO:
-- "renomear": arquivo util, versao mais recente ou unica
-- "engavetar": duplicata, versao antiga, arquivo temporario
-- "manter": arquivo que nao deve ser alterado (dados originais de bases publicas)
-- "excluir": arquivo claramente desnecessario (rascunhos vazios, arquivos corrompidos)
+Exemplos corretos:
+- ART_cinzas-pantanal-efeito-agua_21032026
+- DADOS_obitos-mato-grosso-datasus_15012026
+- DOCS_contrato-consultoria-japuira_10022026
+- ART_pm25-municipios-pantanal-qualidade-ar_30032026
 
-Responda APENAS com JSON valido sem markdown nem texto extra:
+Responda APENAS com JSON valido sem markdown:
 {
-  "suggestedName": "PREFIXO_Palavras-Chave_ANO",
+  "suggestedName": "PREFIXO_palavras-chave_${dateStr}",
   "type": "ART|DADOS|DOCS|REL|CERT|FIG|?",
   "confidence": "alta|media|baixa",
   "action": "renomear|engavetar|manter|excluir",
-  "reason": "justificativa objetiva em portugues sem acentos"
+  "reason": "justificativa em portugues sem acentos, max 80 chars"
 }`;
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1237,43 +1257,75 @@ Responda APENAS com JSON valido sem markdown nem texto extra:
         messages: [{ role: 'user', content: prompt }]
       })
     });
+
+    if (!response.ok) throw new Error(`API error ${response.status}`);
     const data = await response.json();
-    const text = data.content?.[0]?.text || '{}';
+    if (!data.content || !data.content[0]) throw new Error('Resposta vazia da API');
+
+    const text = data.content[0].text || '{}';
     const clean = text.replace(/```json|```/g, '').trim();
     const result = JSON.parse(clean);
-    // Garantir remocao de acentos no nome sugerido
-    // Remover prefixo duplicado (ART_ART_, DOCS_DOCS_, etc)
+
+    // Validacoes de seguranca
+    // 1. Remover prefixo duplicado
     result.suggestedName = result.suggestedName
-      .replace(/^(ART|DADOS|DOCS|REL|CERT|FIG|OLD)_(ART|DADOS|DOCS|REL|CERT|FIG|OLD)_/g, '$1_')
-      .replace(/_?\d{4}_\d{4}$/, (m) => {
-        // Se termina com _2025_2026 ou _2026_2026, manter apenas o ultimo ano
-        const anos = m.match(/\d{4}/g);
-        return '_' + anos[anos.length - 1];
-      });
+      .replace(/^(ART|DADOS|DOCS|REL|CERT|FIG|OLD)_(ART|DADOS|DOCS|REL|CERT|FIG|OLD)[-_]/gi,
+        (m, p1) => p1 + '_');
+
+    // 2. Remover palavras duplicadas consecutivas no titulo
+    const parts = result.suggestedName.split('_');
+    if (parts.length >= 2) {
+      const words = parts[1].split('-').filter((w,i,arr) => arr.indexOf(w) === i);
+      parts[1] = words.join('-');
+      result.suggestedName = parts.join('_');
+    }
+
+    // 3. Garantir remocao de acentos
     result.suggestedName = removeAccents(result.suggestedName);
-    // Garantir que nao termina com ano duplicado
-    result.suggestedName = result.suggestedName.replace(/_?(\d{4})_(\1)$/, '_$1');
+
+    // 4. Se a data nao estiver no nome, adicionar
+    if (!result.suggestedName.includes(dateStr)) {
+      result.suggestedName = result.suggestedName.replace(/_\d{8}$/, '') + '_' + dateStr;
+    }
+
+    result.reason = result.reason || 'Analise pelo conteudo do arquivo';
     return result;
+
   } catch(e) {
-    return localAnalysis(file);
+    console.error('AI error:', e.message);
+    return localAnalysisFallback(file, dateStr);
   }
 }
 
-function localAnalysis(file) {
+function localAnalysisFallback(file, dateStr) {
+  if (!dateStr) {
+    const d = new Date(file.modifiedTime || '');
+    const dd = String(d.getDate()).padStart(2,'0');
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const yyyy = d.getFullYear() || 2026;
+    dateStr = `${dd}${mm}${yyyy}`;
+  }
+
   const name = removeAccents(file.name).toLowerCase();
   let type = '?', prefix = '', action = 'renomear', confidence = 'media';
 
-  if (name.includes('artigo') || name.includes('paper') || name.includes('manuscript') || name.includes('posdoc') || name.includes('art_')) {
+  // Detectar prefixo ja existente
+  const existingPrefix = file.name.match(/^(ART|DADOS|DOCS|REL|CERT|FIG|OLD)[-_]/i);
+  if (existingPrefix) {
+    prefix = existingPrefix[1].toUpperCase() + '_';
+    type = existingPrefix[1].toUpperCase();
+    confidence = 'alta';
+  } else if (name.includes('artigo') || name.includes('paper') || name.includes('manuscript') || name.includes('posdoc')) {
     type = 'ART'; prefix = 'ART_'; confidence = 'alta';
-  } else if (name.includes('dado') || name.includes('data') || name.includes('planilha') || name.includes('obito') || name.includes('serie')) {
+  } else if (name.includes('dado') || name.includes('data') || name.includes('planilha') || name.includes('obito') || name.includes('xlsx') || name.includes('csv')) {
     type = 'DADOS'; prefix = 'DADOS_'; confidence = 'alta';
   } else if (name.includes('cert')) {
     type = 'CERT'; prefix = 'CERT_'; confidence = 'alta';
-  } else if (name.includes('relat') || name.includes('rel_')) {
+  } else if (name.includes('relat')) {
     type = 'REL'; prefix = 'REL_'; confidence = 'media';
-  } else if (name.includes('doc') || name.includes('documento') || name.includes('contrato') || name.includes('oficio')) {
+  } else if (name.includes('doc') || name.includes('contrato') || name.includes('oficio')) {
     type = 'DOCS'; prefix = 'DOCS_'; confidence = 'media';
-  } else if (name.includes('fig') || name.includes('grafico') || name.includes('imagem')) {
+  } else if (name.includes('fig') || name.includes('grafico') || name.includes('.r_') || name.includes('_r_')) {
     type = 'FIG'; prefix = 'FIG_'; confidence = 'media';
   }
 
@@ -1281,27 +1333,28 @@ function localAnalysis(file) {
     action = 'engavetar'; confidence = 'baixa';
   }
 
-  // Limpeza preservando todas as letras, apenas remove acentos e caracteres especiais
-  const cleanName = removeAccents(file.name)
-    .replace(/^[0-9]+[-_]?/,'')
-    .replace(/posdoc[-_]?/gi,'')
-    .replace(/artigo[-_]?/gi,'')
-    .replace(/\s+/g,'-')
-    .replace(/[^a-zA-Z0-9\-]/g,'-')
-    .replace(/[-]+/g,'-')
-    .substring(0, 40)
-    .replace(/^-+|-+$/g,'') || 'Sem-Nome';
+  // Limpar nome: remover prefixo existente, remover extensoes, preservar letras completas
+  let cleanName = removeAccents(file.name)
+    .replace(/^(ART|DADOS|DOCS|REL|CERT|FIG|OLD)[-_]/i, '')
+    .replace(/\.(docx?|xlsx?|pdf|csv|txt|r|py)$/i, '')
+    .replace(/\s+/g, '-')
+    .replace(/[^a-zA-Z0-9\-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase()
+    .substring(0, 45) || 'sem-nome';
 
-  const year = new Date(file.modifiedTime || '').getFullYear() || '2026';
-  // Remover ano que ja esta no nome para evitar duplicacao
-  const cleanNameNoYear = cleanName.replace(/-?\d{4}(-\d{4})?$/g, '').replace(/-+$/g, '');
+  // Remover palavras duplicadas
+  const wordList = cleanName.split('-').filter((w,i,arr) => w && arr.indexOf(w) === i);
+  cleanName = wordList.join('-');
 
   return {
-    suggestedName: `${prefix}${cleanNameNoYear}_${year}`,
+    suggestedName: `${prefix}${cleanName}_${dateStr}`,
     type, confidence, action,
-    reason: 'Analise pelo nome do arquivo'
+    reason: 'Fallback: analise pelo nome - IA indisponivel'
   };
 }
+
 
 // ============================================================
 // DEMO DATA
