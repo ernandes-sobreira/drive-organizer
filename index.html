@@ -1087,23 +1087,30 @@ async function startAnalysis() {
     const f = files[i];
     const pct = Math.round(((i+1)/files.length)*100);
     setProgress(pct, `${i+1} / ${files.length} arquivos processados`);
-    addLog(`🔍 Analisando: ${f.name}...`, '#CBD5E1');
-    await sleep(200);
+    addLog(`\u{1F50D} Analisando: ${f.name}...`, '#CBD5E1');
 
-    let content = '';
-    if (STATE.accessToken !== 'DEMO_MODE' && f.mimeType === 'application/vnd.google-apps.document') {
-      try {
-        const text = await getDocContent(f.id);
-        content = typeof text === 'string' ? text.substring(0, 2000) : '';
-      } catch(e) {}
+    let fileContent = '';
+    let mainDocName = '';
+    if (STATE.accessToken !== 'DEMO_MODE') {
+      if (f.mimeType === 'application/vnd.google-apps.folder') {
+        const mainDoc = await getMainDocInFolder(f.id);
+        if (mainDoc) {
+          mainDocName = mainDoc.name;
+          fileContent = await readFileContent(mainDoc.id, mainDoc.mimeType);
+          if (fileContent) addLog(`  lido doc interno: ${mainDoc.name}`, '#94A3B8');
+        }
+      } else {
+        fileContent = await readFileContent(f.id, f.mimeType);
+        if (fileContent) addLog(`  conteudo lido: ${fileContent.length} chars`, '#94A3B8');
+      }
     } else {
-      content = f.demoContent || '';
+      fileContent = f.demoContent || '';
     }
 
-    const suggestion = await analyzeWithAI(f, content);
+    const suggestion = await analyzeWithAI(f, fileContent, mainDocName);
     STATE.analysisResults.push({ ...f, ...suggestion });
-    addLog(`✅ ${f.name} → ${suggestion.suggestedName}`, '#00C896');
-    await sleep(100);
+    addLog(`ok: ${f.name} -> ${suggestion.suggestedName}`, '#00C896');
+    await sleep(150);
   }
 
   title.textContent = 'Analise concluida!';
@@ -1174,21 +1181,11 @@ async function getMainDocInFolder(folderId) {
   } catch(e) { return null; }
 }
 
-async function analyzeWithAI(file, content) {
+async function analyzeWithAI(file, content, mainDocNameParam) {
   if (STATE.accessToken === 'DEMO_MODE' && file.suggestion) return file.suggestion;
 
-  // Se for pasta, tentar ler o documento principal dentro dela
-  let finalContent = content || '';
-  let mainDocName = '';
-  if (file.mimeType === 'application/vnd.google-apps.folder' && !finalContent) {
-    const mainDoc = await getMainDocInFolder(file.id);
-    if (mainDoc) {
-      mainDocName = mainDoc.name;
-      finalContent = await readFileContent(mainDoc.id, mainDoc.mimeType);
-    }
-  } else if (!finalContent) {
-    finalContent = await readFileContent(file.id, file.mimeType);
-  }
+  const finalContent = content || '';
+  const mainDocName = mainDocNameParam || '';
 
   try {
     const prompt = `Voce e um organizador inteligente de arquivos cientificos de um professor-pesquisador brasileiro especialista em Pantanal, biologia, ecologia, saude ambiental, qualidade do ar, limnologia, bibliometria.
@@ -1245,7 +1242,17 @@ Responda APENAS com JSON valido sem markdown nem texto extra:
     const clean = text.replace(/```json|```/g, '').trim();
     const result = JSON.parse(clean);
     // Garantir remocao de acentos no nome sugerido
+    // Remover prefixo duplicado (ART_ART_, DOCS_DOCS_, etc)
+    result.suggestedName = result.suggestedName
+      .replace(/^(ART|DADOS|DOCS|REL|CERT|FIG|OLD)_(ART|DADOS|DOCS|REL|CERT|FIG|OLD)_/g, '$1_')
+      .replace(/_?\d{4}_\d{4}$/, (m) => {
+        // Se termina com _2025_2026 ou _2026_2026, manter apenas o ultimo ano
+        const anos = m.match(/\d{4}/g);
+        return '_' + anos[anos.length - 1];
+      });
     result.suggestedName = removeAccents(result.suggestedName);
+    // Garantir que nao termina com ano duplicado
+    result.suggestedName = result.suggestedName.replace(/_?(\d{4})_(\1)$/, '_$1');
     return result;
   } catch(e) {
     return localAnalysis(file);
@@ -1286,9 +1293,11 @@ function localAnalysis(file) {
     .replace(/^-+|-+$/g,'') || 'Sem-Nome';
 
   const year = new Date(file.modifiedTime || '').getFullYear() || '2026';
+  // Remover ano que ja esta no nome para evitar duplicacao
+  const cleanNameNoYear = cleanName.replace(/-?\d{4}(-\d{4})?$/g, '').replace(/-+$/g, '');
 
   return {
-    suggestedName: `${prefix}${cleanName}_${year}`,
+    suggestedName: `${prefix}${cleanNameNoYear}_${year}`,
     type, confidence, action,
     reason: 'Analise pelo nome do arquivo'
   };
